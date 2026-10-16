@@ -8,7 +8,7 @@ KiCad-Plugin für den Makerspace-Ablauf (KiCad 9 und 10, pcbnew-Python-API). Fas
 | Bereich | Was passiert | Ausgabe |
 |---|---|---|
 | Schaltplan-PDF | Exportiert den Schaltplan per `kicad-cli`, optional schwarz-weiß | `<Platine>_Schaltplan.pdf` |
-| Viaschablone | Nur Vias, Umriss und optional Passermarken, als rote 0,01-mm-Kontur für den Lasercutter | `Viaschablone/<Platine>-LaserStencil.svg` und `.gbr` |
+| Viaschablone | Vias, Außenkonturen von NPTH-Befestigungslöchern, Umriss und optional Passermarken, als rote 0,01-mm-Kontur für den Lasercutter | `Viaschablone/<Platine>-LaserStencil.svg` und `.gbr` |
 | Fräs-/Bohrplotter | PDF (CuTop gespiegelt, CuBottom), Gerber (Cu, Edge.Cuts, Passermarken), Bohrdaten und Drill-Report | `LPKF/` |
 | Platinenbelichter (UV) | Erzeugt Top-/Bottom-Gerber und lädt sie optional zum Belichter hoch | `UV-Belichter/` |
 | Vorab-Prüfung | Prüft die Platine und erzeugt bei Problemen eine Risikokarte | `<Platine>_Risikokarte.pdf` |
