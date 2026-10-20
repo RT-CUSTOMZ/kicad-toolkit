@@ -113,8 +113,14 @@ class ToolkitDialog(wx.Dialog):
         self._ctrls = {}
 
         root = wx.BoxSizer(wx.VERTICAL)
+        scroll = wx.ScrolledWindow(self, style=wx.VSCROLL)
+        scroll.SetScrollRate(0, 20)
+        display_height = wx.GetDisplaySize().GetHeight()
+        scroll_height = max(240, min(600, display_height - 360))
+        scroll.SetMinSize((580, scroll_height))
+        content = wx.BoxSizer(wx.VERTICAL)
 
-        header = wx.Panel(self)
+        header = wx.Panel(scroll)
         header.SetBackgroundColour(HEADER_BG)
         hs = wx.BoxSizer(wx.VERTICAL)
         title = wx.StaticText(header, label="RT Toolkit")
@@ -125,11 +131,11 @@ class ToolkitDialog(wx.Dialog):
         hs.Add(title, 0, wx.LEFT | wx.TOP | wx.RIGHT, 14)
         hs.Add(board, 0, wx.LEFT | wx.BOTTOM | wx.RIGHT, 14)
         header.SetSizer(hs)
-        root.Add(header, 0, wx.EXPAND)
+        content.Add(header, 0, wx.EXPAND)
 
         body = wx.BoxSizer(wx.VERTICAL)
 
-        self.card_tools = Card(self, self, None, "Vorab-Prüfung & Standardwerte",
+        self.card_tools = Card(scroll, self, None, "Vorab-Prüfung & Standardwerte",
                                "Prüft Größe, Passermarken, Breiten und Abstände; setzt Bahnen und Vias auf Standardwerte")
         self.card_tools.add_grid([
             ("VCC/GND Bahn (mm)", "pw_track", (0.1, 5.0, 0.05), "Leiterbahnbreite der VCC/GND-Netze"),
@@ -176,13 +182,13 @@ class ToolkitDialog(wx.Dialog):
         self.card_tools.body.Add(tool_row, 0, wx.LEFT | wx.TOP, 22)
         body.Add(self.card_tools, 0, wx.EXPAND | wx.BOTTOM, 8)
 
-        self.card_sch = Card(self, self, "sch_enabled", "Schaltplan-PDF",
+        self.card_sch = Card(scroll, self, "sch_enabled", "Schaltplan-PDF",
                              "Schaltplan als PDF in den Projektordner")
         self.card_sch.add_checks([("Schwarz-Weiß", "sch_bw", "Ohne Farben ausgeben")])
         self.card_sch.check.SetToolTip("Schaltplan per kicad-cli als PDF exportieren.\n"
                                        "Er muss denselben Namen wie die Platine haben.")
 
-        self.card_stencil = Card(self, self, "stencil_enabled", "Viaschablone",
+        self.card_stencil = Card(scroll, self, "stencil_enabled", "Viaschablone",
                                  "Schablone für den Lasercutter (nur Vias und Umriss)")
         self.card_stencil.add_checks([
             ("SVG", "stencil_svg", "Rote 0.01 mm Kontur für den Laser"),
@@ -191,7 +197,7 @@ class ToolkitDialog(wx.Dialog):
         self.card_stencil.check.SetToolTip("Schablone für den Lasercutter: nur Vias, Platinenumriss\n"
                                            "und optional Passermarken.")
 
-        self.card_lpkf = Card(self, self, "lpkf_enabled", "Fräs-/Bohrplotter",
+        self.card_lpkf = Card(scroll, self, "lpkf_enabled", "Fräs-/Bohrplotter",
                               "Gerber, PDF und Bohrdaten in RT-production/LPKF")
         self.card_lpkf.add_checks([
             ("PDF", "lpkf_pdf", "CuTop (gespiegelt) und CuBottom"),
@@ -199,7 +205,7 @@ class ToolkitDialog(wx.Dialog):
             ("Bohrdaten", "lpkf_drill", "Bohrdateien, Map und Report")])
         self.card_lpkf.check.SetToolTip("Daten für den LPKF Fräs-/Bohrplotter. Braucht genau 3 Passermarken (FID...).")
 
-        self.card_uv = Card(self, self, "uv_enabled", "Platinenbelichter (UV)",
+        self.card_uv = Card(scroll, self, "uv_enabled", "Platinenbelichter (UV)",
                             "UV-Gerber erzeugen und zum Belichter hochladen",
                             on_change=self._refresh_uv)
         up = self.card_uv.add_checks([("Nach der Erzeugung hochladen", "uv_upload",
@@ -232,15 +238,20 @@ class ToolkitDialog(wx.Dialog):
         for card in self.cards:
             body.Add(card, 0, wx.EXPAND | wx.BOTTOM, 8)
 
+        content.Add(body, 0, wx.EXPAND | wx.ALL, 12)
+        scroll.SetSizer(content)
+        scroll.FitInside()
+        root.Add(scroll, 1, wx.EXPAND | wx.ALL, 12)
+
         self.gauge = wx.Gauge(self, range=1, size=(-1, 8))
-        body.Add(self.gauge, 0, wx.EXPAND | wx.BOTTOM, 6)
+        root.Add(self.gauge, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 12)
 
         self.log_ctrl = wx.TextCtrl(self, style=wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL,
                                     size=(-1, 110))
         self.log_ctrl.SetFont(wx.Font(9, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL,
                                       wx.FONTWEIGHT_NORMAL))
         self.log_ctrl.SetToolTip("Meldungen und Fehler der Aktionen")
-        body.Add(self.log_ctrl, 1, wx.EXPAND | wx.BOTTOM, 10)
+        root.Add(self.log_ctrl, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
 
         btns = wx.BoxSizer(wx.HORIZONTAL)
         folder_btn = wx.Button(self, label="Ausgabeordner öffnen")
@@ -253,9 +264,8 @@ class ToolkitDialog(wx.Dialog):
         btns.AddStretchSpacer()
         btns.Add(self.run_btn, 0, wx.RIGHT, 8)
         btns.Add(wx.Button(self, wx.ID_CLOSE, "Schließen"), 0)
-        body.Add(btns, 0, wx.EXPAND)
+        root.Add(btns, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 12)
 
-        root.Add(body, 1, wx.EXPAND | wx.ALL, 12)
         self.SetSizerAndFit(root)
         self.SetMinSize((580, self.GetSize().GetHeight()))
         self._tidy_tooltips(self)
